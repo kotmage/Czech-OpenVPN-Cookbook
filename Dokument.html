@@ -1,0 +1,51 @@
+<h1 id="openvpn-aneb-jak-na-to">OpenVPN aneb jak na to</h1>
+<p>(psáno na základě zkušeností s verzemi 2.0.x až 2.3.x)</p>
+<h2 id="informační-zdoje">Informační zdoje</h2>
+<p>http://openvpn.net/index.php/open-source.html</p>
+<h2 id="instalace-a-současné-problémy-tap-driveru">Instalace<br />
+a současné problémy TAP driveru</h2>
+<p>Odkaz pro stažení pro windows<br />
+http://openvpn.net/index.php/download/community-downloads.html<br />
+<strong>Zde <em>zatím</em> důrazně doporučuji</strong> (rozdíl od verze 2.3.x) <strong>release I1xx</strong> používající starší (a z hlediska rozhraní zastaralý) NDIS5 TAP driver. Při pokusu o nasazení novějšího I6xx releasu s NDIS6 driverem <strong>přibližně v 08/2014</strong> došlo na Windows7 / Server 2008 R2 / Server 2012 k jeho/openvpn zablokování a nefunkčnosti tunelu.. Proces po spuštění nešel zabít a použitý adpatér odinstalovat. Musel jsem několikrát restartovat produkční server při pokusech o zjištění původu závady, než jsem zkusil vrátit se zpět k I1xx větvy. <strong>edit k 08/2015 - zdá se že závada, ať již jakákoliv byla odstraněna, alespoň tedy užití NDIS6 na straně klienta funguje v pořádku.</strong></p>
+<p>Nainstalujte default set komponent, můžete odebrat volbu přidat OpenVPN do PATH.<br />
+OpenSSL Utilities a OpenVPN RSA Cert... jsou vhodné / potřebné pouze pro stanici kde se budou případně vytvářet certifikáty.</p>
+<p>V současné době je balíček easyRSA, který byl dříve součástí openVPN, samostatný. Odkaz je na výše linkované stránce, nebo k dostání např. přímo zde, stále se vyvíjí:<br />
+https://github.com/OpenVPN/easy-rsa</p>
+<h2 id="teorie-spojení">Teorie spojení</h2>
+<p>Je možno vytvořit tunel s TAP či TUN zařízeními na obou koncích, s tím, že topologie je vždy pár nebo hvězdice (eg. jeden server ostatní klienti). TAP je ethernet level. Přináší to sice větší overhead, ale také možnost použití IPX a podporu všech druhů IP broadcastů. To se u her hodí (často je využívána adresa 255.255.255.255 i u novějších aplikací, což způsobuje na nových systémech Windows sekundární problémy). TAP adaptér je plnohodnotný eth. adpatér, lze na něm standardními způsoby konfigurovat IP, DNS, DHCP, .... je možné ho zapojovat do mostů či dělat s ním jakékoliv další věci...</p>
+<p>TUN pak emuluje přímo IPv4, v novějších verzích i IPv6. Má výhodu menšího overheadu a tedy i vyšší efektivity, je třeba síťovou topologii nastavit skrze OpenVPN.</p>
+<p>OpenVPN dále umožňuje povolit či zakázat komunikaci mezi jednotlivými klienty. (Nejde o navázání přímého spojení ale o komunikaci skrze server). <em>Netestováno jinak než ve stavu povoleno.</em></p>
+<p>Přenosový protokol může být UDP i TCP - TCP je však zbytečné, protože v obou přídech si případná TCP spojení uchovávají svou kontrolu uvnitř tunelu.</p>
+<p>Pozn: Je například možné vytvořit standardní UDP-TAP síť a tu spojit síťovým mostem s TCP-TAP sítí pro klienty s velmi omezenými cílovými porty a protokoly (a provozovat pak tento například na portu 80, 8080, či 443).</p>
+<h2 id="konfigurace-serveru-i-klienta">Konfigurace serveru i klienta</h2>
+<p>Je v zásadě shodná. Liší se v první řade v tom, že server zadává parametr &quot;local&quot; udávající IP adresu pro bind, a client pak analogicky zadává parametr &quot;remote&quot; udávající cílový server.</p>
+<h2 id="tvorba-certifikátů">Tvorba certifikátů</h2>
+<p>Lze použít jakékoliv certifikáty se strukturou CA crt, user crt, user private key pro každého účastníka. Server navíc potřebuje (možná už neplatí?) předgenerovaný soubor DH.</p>
+<h2 id="nasazení">Nasazení</h2>
+<p>Je vhodné postupovat v následujícím pořadí:</p>
+<ol style="list-style-type: decimal">
+<li><p>Rozhodnutí ohledně užití TAP či TUN tunelování</p></li>
+<li><p>Volba umístění a OS serveru<br />
+souvisí s výběrem tunelu, na -nixových systémech lze TAP tunely lépe krotit, například kvůli odstínění DHCP z různých fyzických sítí při spojování stejných podsítí v jednu atp.<br />
+O tomto problému s DHCP více ve FAQ</p></li>
+<li><p>Tvorba certifikátů pro autentizaci<br />
+Doporučuji, nyní od openVPN oddělený, easyRSA projekt pro správu certifikátů (PKI - Public Key Infrastructur, je v kryptografii označení infrastruktury správy a distribuce veřejných klíčů z asymetrické kryptografie.)<br />
+Možno se také rozhodnout pro pass-only řešení (netestováno).<br />
+Na Windows možno použít &quot;Úložiště certifikátů&quot; a využít tak i smartcard a podobné.</p></li>
+<li><p>OPT: Pokud je nutno řešit IP konfiguraci centrálně z server configu(nestačí automatické přiřazování přes rozsah, typicky u TUN konfigurací) či na straně dalších klientů (např přípojené body při routing více podsítí skrze TUN), vytvořit tyto příkazy k konfiguračním souboru a otestovat je na vzorku.</p></li>
+<li><p>Tvorba &quot;redistribuovatelného&quot; balíčku či nástroje pro automatickou tvorbu per-user balíčků s konfigurací. První řešení vhodnější pro menší skupiny. Balíček = obsahuje configfile nastavený na neutrální jméno uživatelského certifikátu, a CA certifikát, ideálně uložený ve složce pojmenované podobně jako configfile. Do tého složky pak také příjdou jednotlivé uživatelské certifikáty a privátní klíče.</p></li>
+<li><p>První oživení serveru</p></li>
+<li><p>Oživování uživatelských instalací</p></li>
+<li><p>Řešení problémů s firewallem, broadcasty atd., nesnažte se předjímat situaci před prvními nasazeními. Vhodná řešení ve FAQ.</p></li>
+<li><p>Hotovo</p></li>
+</ol>
+<h2 id="faq-aneb-praktické-postřehy">FAQ aneb Praktické postřehy</h2>
+<p>Firewall: pokud něco nejde, nebo než to vůbec zkusit, tak ho nejdřív prostě vypnout, otestovat že to jede, a pak zapnout. Ulehčí výrazně diagnostiku <em>časých</em> problemů.</p>
+<p>Pro malé skupiny na hraní atd, je TAP + automatická konfigurace rozsahu IP nejjednoduší možnost.</p>
+<p>Skripty jsou velmi dobří přátelé</p>
+<p>Na Windows je pro hraní vhodné mít skript, který posune vybraný adaptér(jméno/id adaptéru je třeba identifikovat manuálně), respektive všechny jeho trasy, v routovací tabulce navrch, jde hlavně/konkrétně o broadcast (255.255.255.255). Ten se podle dostupných pramenů na Windows XP duplikuje na všechny zařízení, na Windows s jádrem 6 (Vista+) už však nikoliv, posílá se pouze na první trasu. Spousta her pro vyhledávání sessions využívá právě tento broadcast, a jeho správné routování do VPN je tak nezbytností.<br />
+Lze to řešit buďto změnou metriky jedné konkrétní trasy příkazem route, nebo pro celý interface pomocí netsh (či jeho powershell protějšku). Metrika trasy na windows se vypočítá součtem metriky interface a samotné trasy. Standardně je <em>myslím</em> metrika trasy 255. Osobně preferují nastavit metriku herní VPN na 10, fyzický adaptér na 50 či bezdrátové adaptéry na 200. Ostatní násobky 10ti jsou pak volná pro ostatní VPN interface (pracovní, virtuální stroje atd).</p>
+<p>Pokud potřebujete jednoduchou síťovou topologii, pro jednu firmu s síťovými tiskárnami, sdílenými složkami a tiskárnami na více místech, můžete zvolit asi nejednodušší variantu: jednu, např. /24, podsíť, kde každá fyzická síť má adresy jen z určitého jejího rozsahu, a každá fyzická síť má jeden počítač v ní určen jako bod spojení - fyzický adaptér spojený mostem s TAP tunelem. Tyto počítače obsluhující tunel by měli mít statické IP v rámci nepřidělované oblasti zvolené podsítě, stejně tak internetové brány. Vyvstane však problém, pokud se v síti střetnou více než dva DHCP servery (což se stane, protože každá oblast má typicky svojí bránu/DHCP server). Řešení je že všechny, nanejvýš všechny kromě jednoho, klientské přípojné body, budou mít nastavený filter který nepropustí DHCP pakety do své sítě, a pokud bude jedna oblast nechráněná, tak ani žádné nesmí propustit do VPN. <em>Takové řešení (1x server, 1x linux klient + fyzická síť, 1x windows klient + fyzická síť a další libovolný počet samostatných klientů) jsem otestoval.</em><br />
+Pro linux pak poslouží EBTABLES, který je dostupný i na většině linuxových routerových firmwarech, nejhůře v podobě opt-ware. Na Debianu se mi kupodivu odmítl objevit v repozitáři, ruční stažené balíčku z webu a jeho instalace však proběhla OK. http://ebtables.netfilter.org/<br />
+Na Windows jsme takové řešení bohužel nenašel, a tak pro takový případ doporučuji routovanou TUN síť, kde VPN má vlastní rozsah, rozsahy každé fyzické sítě jsou různé, a jsou pouze routované skrze VPN. <em>zatím bohužel v tomto nemohu sdílet žádné zkušenosti</em>.</p>
+<p>Na produkčním stroji způsobily verze 2.2.x v součtu během cca 4 let asi 3 vážnější problémy. Jednou došlo k jakémusi přetížení, kdy interface plodil &quot;nekonečně&quot; paketů v jakési smyčce a úplně zahltil síťový subsystém Windows, bylo třeba se připojit přes KVM a restartovat stroj. Podruhé způsobil běžící VPN server při připojení klientem (zřejmě jiné verze) zamrznutí stroje, a potřetí zmiňovaný problém s NDIS6 driverem, který vedl k několika nuceným restartům.</p>

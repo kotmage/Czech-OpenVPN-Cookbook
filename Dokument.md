@@ -8,12 +8,12 @@ Informační zdoje
 
 http://openvpn.net/index.php/open-source.html
 
-Instalace\
+Instalace   
 a současné problémy TAP driveru
 -------------------------------
 
-Odkaz pro stažení pro windows\
-http://openvpn.net/index.php/download/community-downloads.html\
+Odkaz pro stažení pro windows   
+http://openvpn.net/index.php/download/community-downloads.html   
 **Zde *zatím* důrazně doporučuji** (rozdíl od verze 2.3.x) **release
 I1xx** používající starší (a z hlediska rozhraní zastaralý) NDIS5 TAP
 driver. Při pokusu o nasazení novějšího I6xx releasu s NDIS6 driverem
@@ -26,13 +26,13 @@ závada, ať již jakákoliv byla odstraněna, alespoň tedy užití NDIS6 na
 straně klienta funguje v pořádku.**
 
 Nainstalujte default set komponent, můžete odebrat volbu přidat OpenVPN
-do PATH.\
+do PATH.   
 OpenSSL Utilities a OpenVPN RSA Cert... jsou vhodné / potřebné pouze pro
 stanici kde se budou případně vytvářet certifikáty.
 
 V současné době je balíček easyRSA, který byl dříve součástí openVPN,
 samostatný. Odkaz je na výše linkované stránce, nebo k dostání např.
-přímo zde, stále se vyvíjí:\
+přímo zde, stále se vyvíjí:   
 https://github.com/OpenVPN/easy-rsa
 
 Teorie spojení
@@ -86,18 +86,18 @@ Je vhodné postupovat v následujícím pořadí:
 
 1.  Rozhodnutí ohledně užití TAP či TUN tunelování
 
-2.  Volba umístění a OS serveru\
+2.  Volba umístění a OS serveru   
     souvisí s výběrem tunelu, na -nixových systémech lze TAP tunely lépe
     krotit, například kvůli odstínění DHCP z různých fyzických sítí při
-    spojování stejných podsítí v jednu atp.\
+    spojování stejných podsítí v jednu atp.   
     O tomto problému s DHCP více ve FAQ
 
-3.  Tvorba certifikátů pro autentizaci\
+3.  Tvorba certifikátů pro autentizaci   
     Doporučuji, nyní od openVPN oddělený, easyRSA projekt pro správu
     certifikátů (PKI - Public Key Infrastructur, je v kryptografii
     označení infrastruktury správy a distribuce veřejných klíčů z
-    asymetrické kryptografie.)\
-    Možno se také rozhodnout pro pass-only řešení (netestováno).\
+    asymetrické kryptografie.)   
+    Možno se také rozhodnout pro pass-only řešení (netestováno).   
     Na Windows možno použít "Úložiště certifikátů" a využít tak i
     smartcard a podobné.
 
@@ -142,7 +142,7 @@ broadcast (255.255.255.255). Ten se podle dostupných pramenů na Windows
 XP duplikuje na všechny zařízení, na Windows s jádrem 6 (Vista+) už však
 nikoliv, posílá se pouze na první trasu. Spousta her pro vyhledávání
 sessions využívá právě tento broadcast, a jeho správné routování do VPN
-je tak nezbytností.\
+je tak nezbytností.   
 Lze to řešit buďto změnou metriky jedné konkrétní trasy příkazem route,
 nebo pro celý interface pomocí netsh (či jeho powershell protějšku).
 Metrika trasy na windows se vypočítá součtem metriky interface a samotné
@@ -165,11 +165,11 @@ všechny kromě jednoho, klientské přípojné body, budou mít nastavený
 filter který nepropustí DHCP pakety do své sítě, a pokud bude jedna
 oblast nechráněná, tak ani žádné nesmí propustit do VPN. *Takové řešení
 (1x server, 1x linux klient + fyzická síť, 1x windows klient + fyzická
-síť a další libovolný počet samostatných klientů) jsem otestoval.*\
+síť a další libovolný počet samostatných klientů) jsem otestoval.*   
 Pro linux pak poslouží EBTABLES, který je dostupný i na většině
 linuxových routerových firmwarech, nejhůře v podobě opt-ware. Na Debianu
 se mi kupodivu odmítl objevit v repozitáři, ruční stažené balíčku z webu
-a jeho instalace však proběhla OK. http://ebtables.netfilter.org/\
+a jeho instalace však proběhla OK. http://ebtables.netfilter.org/   
 Na Windows jsme takové řešení bohužel nenašel, a tak pro takový případ
 doporučuji routovanou TUN síť, kde VPN má vlastní rozsah, rozsahy každé
 fyzické sítě jsou různé, a jsou pouze routované skrze VPN. *zatím
