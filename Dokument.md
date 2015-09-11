@@ -8,9 +8,8 @@ Informační zdoje
 
 http://openvpn.net/index.php/open-source.html
 
-Instalace   
-a současné problémy TAP driveru
--------------------------------
+Instalace *a současné problémy TAP driveru*
+-------------------------------------------
 
 Odkaz pro stažení pro windows   
 http://openvpn.net/index.php/download/community-downloads.html   
